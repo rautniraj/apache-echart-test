@@ -69,6 +69,52 @@ export default function ApacheEchart({
                 .map((line) => `${line}`)
                 .join("\n");
         const formatAxisLabel = (value) => formatTextByWords(value, yAxisMaxLineLength);
+        const formatCompactNumber = (value) => {
+            const numericValue = Number(value || 0);
+            const trimTrailingZeros = (formattedValue) =>
+                formattedValue.replace(/\.0+$|(\.\d*[1-9])0+$/, "$1");
+
+            if (numericValue >= 1000000000) {
+                return `${trimTrailingZeros((numericValue / 1000000000).toFixed(2))}B`;
+            }
+
+            if (numericValue >= 1000000) {
+                return `${trimTrailingZeros((numericValue / 1000000).toFixed(2))}M`;
+            }
+
+            if (numericValue >= 1000) {
+                return `${Math.round(numericValue / 1000)}K`;
+            }
+
+            return Math.round(numericValue).toString();
+        };
+        const getTooltipFormatter = (params) => {
+            const item = params.data;
+
+            if (!item) return "";
+
+            return `
+                <div style="min-width: 220px; font-family: ${chartFontFamily};">
+                    <div style="margin-bottom: 10px; font-size: 14px; font-weight: 700; color: #111827;">
+                        ${item.label || params.name}
+                    </div>
+                    <div style="display: grid; grid-template-columns: auto auto; gap: 6px 18px; font-size: 13px; color: #374151;">
+                        <span>Meetings</span>
+                        <span style="text-align: right; font-weight: 600; color: #111827;">
+                            ${formatCompactNumber(item.meetings_count)}
+                        </span>
+                        <span>Duration</span>
+                        <span style="text-align: right; font-weight: 600; color: #111827;">
+                            ${formatCompactNumber(item.duration_sum / 60)} hrs
+                        </span>
+                        <span>Participants</span>
+                        <span style="text-align: right; font-weight: 600; color: #111827;">
+                            ${formatCompactNumber(item.participants_sum)}
+                        </span>
+                    </div>
+                </div>
+            `;
+        };
 
         const getHeaderGraphic = (titleText, showBack = false) => {
             const headerGraphic = [
@@ -97,7 +143,7 @@ export default function ApacheEchart({
                     top: 60,
                     z: 100,
                     style: {
-                        text: "<- Back",
+                        text: "<- Back to Ministries",
                         fontSize: 16,
                         fontWeight: "bold",
                         cursor: "pointer",
@@ -112,11 +158,24 @@ export default function ApacheEchart({
         };
 
         const getChartOption = (yAxisData, seriesData, extraOption = {}) => ({
+            tooltip: {
+                trigger: "item",
+                backgroundColor: "#FFFFFF",
+                borderColor: "#D1D5DB",
+                borderWidth: 1,
+                padding: 12,
+                textStyle: {
+                    fontFamily: chartFontFamily,
+                },
+                extraCssText: "box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12); border-radius: 10px;",
+                formatter: getTooltipFormatter,
+            },
             grid: chartGrid,
             xAxis: {
                 type: "value",
                 axisLabel: {
                     fontFamily: chartFontFamily,
+                    formatter: formatCompactNumber,
                 },
             },
             yAxis: {
@@ -146,6 +205,7 @@ export default function ApacheEchart({
                     show: true,
                     position: "right",
                     fontFamily: chartFontFamily,
+                    formatter: ({ value }) => formatCompactNumber(value),
                 },
                 ...seriesData,
                 universalTransition: {
@@ -169,6 +229,10 @@ export default function ApacheEchart({
                 data: ministries.map((ministry) => ({
                     value: ministry.meetings_count,
                     groupId: ministry.ministry_id.toString(),
+                    label: ministry.ministry_name,
+                    meetings_count: ministry.meetings_count,
+                    duration_sum: ministry.duration_sum,
+                    participants_sum: ministry.participants_sum,
                 })),
             },
             {
@@ -178,10 +242,14 @@ export default function ApacheEchart({
 
         const drilldownData = ministries.map((ministry) => ({
             dataGroupId: ministry.ministry_id.toString(),
-            data: ministry.organizations.map((organization) => [
-                organization.organization_name,
-                organization.meetings_count,
-            ]),
+            ministryName: ministry.ministry_name,
+            data: ministry.organizations.map((organization) => ({
+                value: organization.meetings_count,
+                label: organization.organization_name,
+                meetings_count: organization.meetings_count,
+                duration_sum: organization.duration_sum,
+                participants_sum: organization.participants_sum,
+            })),
         }));
 
         const handleBack = () => {
@@ -214,18 +282,14 @@ export default function ApacheEchart({
             setChartHeight(newHeight);
 
             const drilldownOption = getChartOption(
-                drilldown.data.map((item) => item[0]),
+                drilldown.data.map((item) => item.label),
                 {
                     dataGroupId: drilldown.dataGroupId,
-                    data: drilldown.data.map((item) => item[1]),
+                    data: drilldown.data,
                 },
                 {
                     graphic: getHeaderGraphic(
-                        `Organizations Under ${
-                            ministries.find(
-                                (ministry) => ministry.ministry_id.toString() === drilldown.dataGroupId
-                            )?.ministry_name || ""
-                        }`,
+                        `Organizations Under ${drilldown.ministryName}`,
                         true
                     ),
                 }
@@ -291,3 +355,14 @@ export default function ApacheEchart({
         </div>
     );
 }
+
+
+// Priority 6 — API integration ⭐⭐⭐⭐⭐
+
+// Finally replace
+
+// import response from "./sample.json";
+
+// with your Rails API call.
+
+// Since we've kept the component data-driven, this should be almost a drop-in replacement.
