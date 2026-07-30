@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import * as echarts from "echarts";
 import response from "../assets/sample.json";
 
@@ -9,10 +9,19 @@ export default function ApacheEchart({
     const chartRef = useRef(null);
     const chartInstanceRef = useRef(null);
 
-    const ministries = React.useMemo(
+    const ministries = useMemo(
         () => [...response.data.data],
         []
     );
+
+
+    const rowHeight = 75;
+    const minHeight = 500;
+    const [chartHeight, setChartHeight] = useState(minHeight);
+
+    useEffect(() => {
+        setChartHeight(Math.max(minHeight, ministries.length * rowHeight));
+    }, [ministries]);
 
     useEffect(() => {
         if (!chartInstanceRef.current) {
@@ -30,9 +39,9 @@ export default function ApacheEchart({
 
         const rootOption = {
             grid: {
-                left: 100,
-                right: 40,
-                top: 30,
+                left: 90,
+                right: 50,
+                top: 50,
                 bottom: 20,
                 containLabel: true,
             },
@@ -49,11 +58,12 @@ export default function ApacheEchart({
                     show: false,
                 },
                 axisLabel: {
-                    width: 350,
-                    lineHeight: 18,
+                    width: 250,
+                    overflow: "break",
+                    lineHeight: 20,
 
                     formatter: value => {
-                        const maxLength = 28;
+                        const maxLength = 35;
                         const words = value.split(" ");
 
                         let lines = [];
@@ -112,11 +122,24 @@ export default function ApacheEchart({
             ]),
         }));
 
-        const handleBack = () => {
-            chart.setOption(rootOption, {
-                notMerge: true,
-            });
-        };
+const handleBack = () => {
+    const newHeight = Math.max(
+        minHeight,
+        ministries.length * rowHeight
+    );
+
+    setChartHeight(newHeight);
+
+    setTimeout(() => {
+        chart.resize({
+            height: newHeight,
+        });
+
+        chart.setOption(rootOption, {
+            notMerge: true,
+        });
+    }, 0);
+};
 
         const handleChartClick = (event) => {
             if (!event.data) return;
@@ -126,105 +149,119 @@ export default function ApacheEchart({
             );
 
             if (!drilldown) return;
+            
+            const newHeight = Math.max(minHeight, drilldown.data.length * rowHeight);
 
-            chart.setOption(
-                {
-                    grid: {
-                        left: 75,
-                        right: 40,
-                        top: 60,
-                        bottom: 20,
-                        containLabel: true,
-                    },
+            setChartHeight(newHeight);
 
-                    xAxis: {
-                        type: "value",
-                    },
 
-                    yAxis: {
-                        type: "category",
-                        inverse: true,
-                        data: drilldown.data.map((item) => item[0]),
-                        axisTick: {
-                            show: false,
-                        },
-                        axisLabel: {
-                            width: 240,
-                            lineHeight: 18,
+            //             console.log(drilldown)
+            //             console.log(drilldown.data.length);
+            // console.log(drilldown.data.map(item => item[0]));
+            // console.log(drilldown.data.map(item => item[1]));
 
-                            formatter: value => {
-                                const maxLength = 28;
-                                const words = value.split(" ");
+            console.log("Chart Height:", chartHeight);
+            console.log("Expected Height:", Math.max(minHeight, drilldown.data.length * rowHeight));
 
-                                let lines = [];
-                                let currentLine = "";
+            setTimeout(() => {
+                chart.resize({
+                    height: newHeight,
+                });
 
-                                words.forEach(word => {
-                                    if ((currentLine + " " + word).trim().length <= maxLength) {
-                                        currentLine = (currentLine + " " + word).trim();
-                                    } else {
-                                        lines.push(currentLine);
-                                        currentLine = word;
-                                    }
-                                });
-
-                                if (currentLine) {
-                                    lines.push(currentLine);
-                                }
-
-                                return lines.join("\n");
-                            }
-                        }
-                    },
-
-                    series: {
-                        id: "meetings",
-                        type: "bar",
-                        colorBy: "data",
-
-                        barMaxWidth: 28,
-                        barCategoryGap: "30%",
-
-                        label: {
-                            show: true,
-                            position: "right",
+                chart.setOption(
+                    {
+                        grid: {
+                            left: 90,
+                            right: 50,
+                            top: 50,
+                            bottom: 20,
+                            containLabel: true,
                         },
 
-                        dataGroupId: drilldown.dataGroupId,
-
-                        data: drilldown.data.map((item) => item[1]),
-
-                        universalTransition: {
-                            enabled: true,
-                            divideShape: "clone",
+                        xAxis: {
+                            type: "value",
                         },
-                    },
 
-                    graphic: [
-                        {
-                            type: "text",
-                            left: 20,
-                            top: 20,
-                            style: {
-                                text: "← Back",
-                                fontSize: 16,
-                                fontWeight: "bold",
-                                cursor: "pointer",
+                        yAxis: {
+                            type: "category",
+                            inverse: true,
+                            data: drilldown.data.map((item) => item[0]),
+                            axisTick: {
+                                show: false,
                             },
-                            onclick: handleBack,
+                            axisLabel: {
+                                width: 250,
+                                overflow: "break",
+                                lineHeight: 20,
+
+                                formatter: value => {
+                                    const maxLength = 35;
+                                    const words = value.split(" ");
+
+                                    let lines = [];
+                                    let currentLine = "";
+
+                                    words.forEach(word => {
+                                        if ((currentLine + " " + word).trim().length <= maxLength) {
+                                            currentLine = (currentLine + " " + word).trim();
+                                        } else {
+                                            lines.push(currentLine);
+                                            currentLine = word;
+                                        }
+                                    });
+
+                                    if (currentLine) {
+                                        lines.push(currentLine);
+                                    }
+
+                                    return lines.join("\n");
+                                }
+                            }
                         },
-                    ],
-                },
-                {
-                    replaceMerge: [
-                        "grid",
-                        "xAxis",
-                        "yAxis",
-                        "series",
-                        "graphic",
-                    ],
-                }
-            );
+
+                        series: {
+                            id: "meetings",
+                            type: "bar",
+                            colorBy: "data",
+
+                            barMaxWidth: 28,
+                            barCategoryGap: "30%",
+
+                            label: {
+                                show: true,
+                                position: "right",
+                            },
+
+                            dataGroupId: drilldown.dataGroupId,
+
+                            data: drilldown.data.map((item) => item[1]),
+
+                            universalTransition: {
+                                enabled: true,
+                                divideShape: "clone",
+                            },
+                        },
+
+                        graphic: [
+                            {
+                                type: "text",
+                                left: 20,
+                                top: 20,
+                                style: {
+                                    text: "← Back",
+                                    fontSize: 16,
+                                    fontWeight: "bold",
+                                    cursor: "pointer",
+                                },
+                                onclick: handleBack,
+                            },
+                        ],
+                    },
+                    {
+                        notMerge: true,
+                    }
+                );
+            }, 0);
         };
 
         chart.off("click");
@@ -234,14 +271,20 @@ export default function ApacheEchart({
             notMerge: true,
         });
 
-        chart.resize();
-
         return () => {
             chart.off("click");
             chart.dispose();
             chartInstanceRef.current = null;
         };
     }, [isLoading, ministries]);
+
+    useEffect(() => {
+        if (!chartInstanceRef.current) return;
+
+        chartInstanceRef.current.resize({
+            height: chartHeight,
+        });
+    }, [chartHeight]);
 
     useEffect(() => {
         const handleResize = () => chartInstanceRef.current?.resize();
@@ -253,12 +296,20 @@ export default function ApacheEchart({
 
     return (
         <div
-            ref={chartRef}
-            className={className}
             style={{
                 width: "100%",
                 height: "500px",
+                overflowY: "auto",
             }}
-        />
+        >
+            <div
+                ref={chartRef}
+                className={className}
+                style={{
+                    width: "100%",
+                    height: `${chartHeight}px`,
+                }}
+            />
+        </div>
     );
 }
