@@ -74,12 +74,12 @@ export default function ApacheEchart({
             const headerGraphic = [
                 {
                     type: "text",
-                    left: "50%",
+                    left: 0,
                     top: 10,
                     z: 100,
                     style: {
                         text: formatTitleText(titleText),
-                        textAlign: "center",
+                        textAlign: "left",
                         textVerticalAlign: "top",
                         fontSize: 18,
                         fontWeight: 600,
@@ -135,7 +135,7 @@ export default function ApacheEchart({
                     formatter: formatAxisLabel,
                 },
             },
-            animationDurationUpdate: 700,
+            animationDurationUpdate: 800,
             series: {
                 id: "meetings",
                 type: "bar",
