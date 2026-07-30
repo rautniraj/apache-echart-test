@@ -15,10 +15,12 @@ export default function ApacheEchart({
     const chartGrid = {
         left: 300,
         right: 50,
-        top: 50,
+        top: 104,
         bottom: 20,
         containLabel: false,
     };
+    const chartFontFamily = "Arial, sans-serif";
+    const chartTitleMaxLineLength = 75;
 
     const ministries = useMemo(
         () => [...response.data.data],
@@ -40,13 +42,13 @@ export default function ApacheEchart({
 
         const chart = chartInstanceRef.current;
 
-        const formatAxisLabel = (value) => {
+        const formatTextLinesByWords = (value, maxLineLength) => {
             const words = value.split(" ");
             const lines = [];
             let currentLine = "";
 
             words.forEach((word) => {
-                if ((currentLine + " " + word).trim().length <= yAxisMaxLineLength) {
+                if ((currentLine + " " + word).trim().length <= maxLineLength) {
                     currentLine = (currentLine + " " + word).trim();
                 } else {
                     lines.push(currentLine);
@@ -58,13 +60,64 @@ export default function ApacheEchart({
                 lines.push(currentLine);
             }
 
-            return lines.join("\n");
+            return lines;
+        };
+        const formatTextByWords = (value, maxLineLength) =>
+            formatTextLinesByWords(value, maxLineLength).join("\n");
+        const formatTitleText = (value) =>
+            formatTextLinesByWords(value, chartTitleMaxLineLength)
+                .map((line) => `${line}`)
+                .join("\n");
+        const formatAxisLabel = (value) => formatTextByWords(value, yAxisMaxLineLength);
+
+        const getHeaderGraphic = (titleText, showBack = false) => {
+            const headerGraphic = [
+                {
+                    type: "text",
+                    left: "50%",
+                    top: 10,
+                    z: 100,
+                    style: {
+                        text: formatTitleText(titleText),
+                        textAlign: "center",
+                        textVerticalAlign: "top",
+                        fontSize: 18,
+                        fontWeight: 600,
+                        fontFamily: chartFontFamily,
+                        fill: "#111827",
+                        lineHeight: 54,
+                    },
+                },
+            ];
+
+            if (showBack) {
+                headerGraphic.push({
+                    type: "text",
+                    left: 20,
+                    top: 60,
+                    z: 100,
+                    style: {
+                        text: "<- Back",
+                        fontSize: 16,
+                        fontWeight: "bold",
+                        cursor: "pointer",
+                        fontFamily: chartFontFamily,
+                        fill: "#111827",
+                    },
+                    onclick: handleBack,
+                });
+            }
+
+            return headerGraphic;
         };
 
         const getChartOption = (yAxisData, seriesData, extraOption = {}) => ({
             grid: chartGrid,
             xAxis: {
                 type: "value",
+                axisLabel: {
+                    fontFamily: chartFontFamily,
+                },
             },
             yAxis: {
                 type: "category",
@@ -78,6 +131,7 @@ export default function ApacheEchart({
                     overflow: "break",
                     lineHeight: 20,
                     margin: 20,
+                    fontFamily: chartFontFamily,
                     formatter: formatAxisLabel,
                 },
             },
@@ -91,6 +145,7 @@ export default function ApacheEchart({
                 label: {
                     show: true,
                     position: "right",
+                    fontFamily: chartFontFamily,
                 },
                 ...seriesData,
                 universalTransition: {
@@ -115,6 +170,9 @@ export default function ApacheEchart({
                     value: ministry.meetings_count,
                     groupId: ministry.ministry_id.toString(),
                 })),
+            },
+            {
+                graphic: getHeaderGraphic("Meetings by Ministry"),
             }
         );
 
@@ -162,20 +220,14 @@ export default function ApacheEchart({
                     data: drilldown.data.map((item) => item[1]),
                 },
                 {
-                    graphic: [
-                        {
-                            type: "text",
-                            left: 20,
-                            top: 20,
-                            style: {
-                                text: "<- Back",
-                                fontSize: 16,
-                                fontWeight: "bold",
-                                cursor: "pointer",
-                            },
-                            onclick: handleBack,
-                        },
-                    ],
+                    graphic: getHeaderGraphic(
+                        `Organizations Under ${
+                            ministries.find(
+                                (ministry) => ministry.ministry_id.toString() === drilldown.dataGroupId
+                            )?.ministry_name || ""
+                        }`,
+                        true
+                    ),
                 }
             );
 
