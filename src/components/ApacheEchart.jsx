@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import * as echarts from "echarts";
 
 const yAxisLabelWidth = 250;
@@ -96,22 +96,22 @@ export default function ApacheEchart({
       if (!item) return "";
 
       return `
-        <div style="min-width: 210px; font-family: ${chartFontFamily};">
-          <div style="margin-bottom: 8px; font-size: 14px; color: #6B7280;">
-            ${item.label || params.name}
-          </div>
-          <div style="display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 7px 8px; font-size: 14px; color: #5F6368;">
+        <div style="min-width: 200px; font-family: ${chartFontFamily};">
+        <div style="margin-bottom: 8px; font-size: 14px; font-weight: 700; color: #6B7280;">
+          ${item.label || params.name}
+        </div>
+          <div style="display: grid; grid-template-columns: auto minmax(165px, 1fr) auto; align-items: center; gap: 7px 10px; font-size: 14px; color: #5F6368;">
             <span style="width: 10px; height: 10px; border-radius: 50%; background: ${params.color}; display: inline-block;"></span>
-            <span>Meetings</span>
-            <span style="font-weight: 700; color: #5F6368;">${formatCompactNumber(item.meetings_count)}</span>
+            <span>Meetings Hosted</span>
+            <span style="font-weight: 700; color: #5F6368; text-align: right;">${formatCompactNumber(item.meetings_count)}</span>
 
             <span style="width: 10px; height: 10px; border-radius: 50%; background: #A3D329; display: inline-block;"></span>
-            <span>Duration</span>
-            <span style="font-weight: 700; color: #5F6368;">${formatCompactNumber(item.duration_sum / 60)} hrs</span>
+            <span>Conference Hours</span>
+            <span style="font-weight: 700; color: #5F6368; text-align: right;">${formatCompactNumber(item.duration_sum / 60)}</span>
 
             <span style="width: 10px; height: 10px; border-radius: 50%; background: #000; display: inline-block;"></span>
-            <span>Participants</span>
-            <span style="font-weight: 700; color: #5F6368;">${formatCompactNumber(item.participants_sum)}</span>
+            <span>Participants Connected</span>
+            <span style="font-weight: 700; color: #5F6368; text-align: right;">${formatCompactNumber(item.participants_sum)}</span>
           </div>
         </div>
       `;
@@ -186,6 +186,20 @@ export default function ApacheEchart({
         extraCssText: "box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12); border-radius: 10px;",
         formatter: getTooltipFormatter,
       },
+      toolbox: {
+        show: true,
+        right: 16,
+        top: 14,
+        feature: {
+          saveAsImage: {
+            title: "Download",
+            name: "meetings-dashboard",
+            type: "png",
+            pixelRatio: 2,
+            backgroundColor: "#FFFFFF",
+          },
+        },
+      },
       grid: chartGrid,
       xAxis: {
         type: "value",
@@ -207,6 +221,7 @@ export default function ApacheEchart({
           lineHeight: 20,
           margin: 20,
           fontFamily: chartFontFamily,
+          fontWeight: 600,
           formatter: formatAxisLabel,
         },
       },
