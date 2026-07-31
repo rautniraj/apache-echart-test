@@ -22,6 +22,7 @@ export default function ApacheEchart({
 }) {
   const chartRef = useRef(null);
   const chartInstanceRef = useRef(null);
+  const chartUpdateTimerRef = useRef(null);
   const [drilldownChartHeight, setDrilldownChartHeight] = useState(null);
   const ministries = useMemo(
     () => (Array.isArray(ministryUsage) ? ministryUsage : []),
@@ -34,11 +35,36 @@ export default function ApacheEchart({
       : rootChartHeight;
 
   useEffect(() => {
+    if (!chartRef.current) return;
+
     if (!chartInstanceRef.current) {
       chartInstanceRef.current = echarts.init(chartRef.current);
     }
 
     const chart = chartInstanceRef.current;
+
+    const setChartOption = (currentChart, option) => {
+      currentChart.dispatchAction({
+        type: "hideTip",
+      });
+      currentChart.setOption(option);
+    };
+
+    const queueChartUpdate = (callback) => {
+      if (chartUpdateTimerRef.current) {
+        window.clearTimeout(chartUpdateTimerRef.current);
+      }
+
+      chartUpdateTimerRef.current = window.setTimeout(() => {
+        chartUpdateTimerRef.current = null;
+
+        if (!chartInstanceRef.current || chartInstanceRef.current.isDisposed()) {
+          return;
+        }
+
+        callback(chartInstanceRef.current);
+      }, 0);
+    };
 
     const formatTextLinesByWords = (value, maxLineLength) => {
       const words = String(value ?? "").split(" ");
@@ -173,7 +199,12 @@ export default function ApacheEchart({
       },
     });
 
-    const getChartOption = (yAxisData, seriesData, extraOption = {}) => ({
+    const getChartOption = (
+      yAxisData,
+      seriesData,
+      extraOption = {},
+      enableTransition = true
+    ) => ({
       tooltip: {
         trigger: "item",
         backgroundColor: "#FFFFFF",
@@ -240,7 +271,7 @@ export default function ApacheEchart({
         },
         ...seriesData,
         universalTransition: {
-          enabled: true,
+          enabled: enableTransition,
           divideShape: "clone",
         },
       },
@@ -256,7 +287,8 @@ export default function ApacheEchart({
 
     if (ministries.length === 0) {
       chart.off("click");
-      chart.setOption(
+      setChartOption(
+        chart,
         getChartOption(
           [],
           {
@@ -278,9 +310,6 @@ export default function ApacheEchart({
             },
           }
         ),
-        {
-          notMerge: true,
-        }
       );
       return;
     }
@@ -319,15 +348,13 @@ export default function ApacheEchart({
 
       setDrilldownChartHeight(null);
 
-      setTimeout(() => {
-        chart.resize({
+      queueChartUpdate((currentChart) => {
+        currentChart.resize({
           height: newHeight,
         });
 
-        chart.setOption(rootOption, {
-          notMerge: true,
-        });
-      }, 0);
+        setChartOption(currentChart, rootOption);
+      });
     };
 
     const handleChartClick = (event) => {
@@ -357,28 +384,30 @@ export default function ApacheEchart({
             `Organizations Under ${drilldown.ministryName}`,
             true
           ),
-        }
+        },
+        false
       );
 
-      setTimeout(() => {
-        chart.resize({
+      queueChartUpdate((currentChart) => {
+        currentChart.resize({
           height: newHeight,
         });
 
-        chart.setOption(drilldownOption, {
-          notMerge: true,
-        });
-      }, 0);
+        setChartOption(currentChart, drilldownOption);
+      });
     };
 
     chart.off("click");
     chart.on("click", handleChartClick);
 
-    chart.setOption(rootOption, {
-      notMerge: true,
-    });
+    setChartOption(chart, rootOption);
 
     return () => {
+      if (chartUpdateTimerRef.current) {
+        window.clearTimeout(chartUpdateTimerRef.current);
+        chartUpdateTimerRef.current = null;
+      }
+
       chart.off("click");
       chart.dispose();
       chartInstanceRef.current = null;
