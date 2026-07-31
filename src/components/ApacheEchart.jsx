@@ -4,7 +4,7 @@ import * as echarts from "echarts";
 const yAxisLabelWidth = 250;
 const yAxisMaxLineLength = 35;
 const chartGrid = {
-  left: 300,
+  left: 250,
   right: 50,
   top: 104,
   bottom: 20,
