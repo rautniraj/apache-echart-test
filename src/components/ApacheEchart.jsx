@@ -193,7 +193,7 @@ export default function ApacheEchart({
         feature: {
           saveAsImage: {
             title: "Download",
-            name: "meetings-dashboard",
+            name: `meetings-dashboard-${Date.now()}`,
             type: "png",
             pixelRatio: 2,
             backgroundColor: "#FFFFFF",
