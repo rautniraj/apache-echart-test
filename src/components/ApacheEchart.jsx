@@ -109,7 +109,7 @@ export default function ApacheEchart({
             <span>Duration</span>
             <span style="font-weight: 700; color: #5F6368;">${formatCompactNumber(item.duration_sum / 60)} hrs</span>
 
-            <span style="width: 10px; height: 10px; border-radius: 50%; background: #5470C6; display: inline-block;"></span>
+            <span style="width: 10px; height: 10px; border-radius: 50%; background: #000; display: inline-block;"></span>
             <span>Participants</span>
             <span style="font-weight: 700; color: #5F6368;">${formatCompactNumber(item.participants_sum)}</span>
           </div>
