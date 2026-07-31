@@ -1,5 +1,4 @@
 import ApacheEchart from './components/ApacheEchart'
-// import './App.css'
 // import response from "./assets/sample_8.json";
 import response from "./assets/sample_all.json";
 
