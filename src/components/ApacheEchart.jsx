@@ -18,7 +18,7 @@ const minHeight = 500;
 export default function ApacheEchart({
   isLoading = false,
   className,
-  ministryUsage = [],
+  ministryUsage,
 }) {
   const chartRef = useRef(null);
   const chartInstanceRef = useRef(null);
@@ -159,6 +159,21 @@ export default function ApacheEchart({
       return headerGraphic;
     };
 
+    const getNoDataGraphic = () => ({
+      type: "text",
+      left: "center",
+      top: "middle",
+      z: 100,
+      style: {
+        text: "No data available",
+        textAlign: "center",
+        fontSize: 16,
+        fontWeight: 600,
+        fontFamily: chartFontFamily,
+        fill: "#6B7280",
+      },
+    });
+
     const getChartOption = (yAxisData, seriesData, extraOption = {}) => ({
       tooltip: {
         trigger: "item",
@@ -225,6 +240,37 @@ export default function ApacheEchart({
 
     chart.hideLoading();
 
+    if (ministries.length === 0) {
+      chart.off("click");
+      chart.setOption(
+        getChartOption(
+          [],
+          {
+            data: [],
+          },
+          {
+            graphic: [
+              ...getHeaderGraphic("Meetings by Ministry"),
+              getNoDataGraphic(),
+            ],
+            grid: {
+              show: false,
+            },
+            xAxis: {
+              show: false,
+            },
+            yAxis: {
+              show: false,
+            },
+          }
+        ),
+        {
+          notMerge: true,
+        }
+      );
+      return;
+    }
+
     const rootOption = getChartOption(
       ministries.map((ministry) => ministry.ministry_name),
       {
@@ -245,7 +291,7 @@ export default function ApacheEchart({
     const drilldownData = ministries.map((ministry) => ({
       dataGroupId: String(ministry.ministry_id ?? ministry.ministry_name),
       ministryName: ministry.ministry_name,
-      data: (Array.isArray(ministry.organizations) ? ministry.organizations : []).map((organization) => ({
+      data: ministry.organizations.map((organization) => ({
         value: organization.meetings_count,
         label: organization.organization_name,
         meetings_count: organization.meetings_count,
