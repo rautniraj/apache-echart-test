@@ -74,6 +74,10 @@ export default function ApacheEchart({
             const trimTrailingZeros = (formattedValue) =>
                 formattedValue.replace(/\.0+$|(\.\d*[1-9])0+$/, "$1");
 
+            if (numericValue >= 1000000000000) {
+                return `${trimTrailingZeros((numericValue / 1000000000000).toFixed(2))}T`;
+            }
+
             if (numericValue >= 1000000000) {
                 return `${trimTrailingZeros((numericValue / 1000000000).toFixed(2))}B`;
             }
