@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import * as echarts from "echarts";
 
 const yAxisLabelWidth = 250;
@@ -72,20 +72,20 @@ export default function ApacheEchart({
       const trimTrailingZeros = (formattedValue) =>
         formattedValue.replace(/\.0+$|(\.\d*[1-9])0+$/, "$1");
 
-      if (numericValue >= 1000000000000) {
-        return `${trimTrailingZeros((numericValue / 1000000000000).toFixed(2))}T`;
+      if (numericValue >= 1_000_000_000_000) {
+        return `${trimTrailingZeros((numericValue / 1_000_000_000_000).toFixed(2))}T`;
       }
 
-      if (numericValue >= 1000000000) {
-        return `${trimTrailingZeros((numericValue / 1000000000).toFixed(2))}B`;
+      if (numericValue >= 1_000_000_000) {
+        return `${trimTrailingZeros((numericValue / 1_000_000_000).toFixed(2))}B`;
       }
 
-      if (numericValue >= 1000000) {
-        return `${trimTrailingZeros((numericValue / 1000000).toFixed(2))}M`;
+      if (numericValue >= 1_000_000) {
+        return `${trimTrailingZeros((numericValue / 1_000_000).toFixed(2))}M`;
       }
 
-      if (numericValue >= 1000) {
-        return `${Math.round(numericValue / 1000)}K`;
+      if (numericValue >= 1_000) {
+        return `${Math.round(numericValue / 1_000)}K`;
       }
 
       return Math.round(numericValue).toString();
@@ -406,14 +406,3 @@ export default function ApacheEchart({
     </div>
   );
 }
-
-
-// Priority 6 — API integration ⭐⭐⭐⭐⭐
-
-// Finally replace
-
-// import response from "./sample.json";
-
-// with your Rails API call.
-
-// Since we've kept the component data-driven, this should be almost a drop-in replacement.
