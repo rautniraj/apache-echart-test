@@ -96,26 +96,25 @@ export default function ApacheEchart({
       if (!item) return "";
 
       return `
-                <div style="min-width: 220px; font-family: ${chartFontFamily};">
-                    <div style="margin-bottom: 10px; font-size: 14px; font-weight: 700; color: #111827;">
-                        ${item.label || params.name}
-                    </div>
-                    <div style="display: grid; grid-template-columns: auto auto; gap: 6px 18px; font-size: 13px; color: #374151;">
-                        <span>Meetings</span>
-                        <span style="text-align: right; font-weight: 600; color: #111827;">
-                            ${formatCompactNumber(item.meetings_count)}
-                        </span>
-                        <span>Duration</span>
-                        <span style="text-align: right; font-weight: 600; color: #111827;">
-                            ${formatCompactNumber(item.duration_sum / 60)} hrs
-                        </span>
-                        <span>Participants</span>
-                        <span style="text-align: right; font-weight: 600; color: #111827;">
-                            ${formatCompactNumber(item.participants_sum)}
-                        </span>
-                    </div>
-                </div>
-            `;
+        <div style="min-width: 210px; font-family: ${chartFontFamily};">
+          <div style="margin-bottom: 8px; font-size: 14px; color: #6B7280;">
+            ${item.label || params.name}
+          </div>
+          <div style="display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 7px 8px; font-size: 14px; color: #5F6368;">
+            <span style="width: 10px; height: 10px; border-radius: 50%; background: ${params.color}; display: inline-block;"></span>
+            <span>Meetings</span>
+            <span style="font-weight: 700; color: #5F6368;">${formatCompactNumber(item.meetings_count)}</span>
+
+            <span style="width: 10px; height: 10px; border-radius: 50%; background: #A3D329; display: inline-block;"></span>
+            <span>Duration</span>
+            <span style="font-weight: 700; color: #5F6368;">${formatCompactNumber(item.duration_sum / 60)} hrs</span>
+
+            <span style="width: 10px; height: 10px; border-radius: 50%; background: #5470C6; display: inline-block;"></span>
+            <span>Participants</span>
+            <span style="font-weight: 700; color: #5F6368;">${formatCompactNumber(item.participants_sum)}</span>
+          </div>
+        </div>
+      `;
     };
 
     const getHeaderGraphic = (titleText, showBack = false) => {
