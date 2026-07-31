@@ -1,9 +1,10 @@
-import React from 'react'
 import ApacheEchart from './components/ApacheEchart'
 // import './App.css'
+// import response from "./assets/sample_8.json";
+import response from "./assets/sample_all.json";
 
 export default function App() {
   return (
-    <ApacheEchart />
+    <ApacheEchart isLoading={false} ministryUsage={response.data.data} />
   )
 }

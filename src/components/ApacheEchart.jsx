@@ -1,103 +1,101 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import * as echarts from "echarts";
-// import response from "../assets/sample_8.json";
-import response from "../assets/sample_all.json";
+
+const yAxisLabelWidth = 250;
+const yAxisMaxLineLength = 35;
+const chartGrid = {
+  left: 300,
+  right: 50,
+  top: 104,
+  bottom: 20,
+  containLabel: false,
+};
+const chartFontFamily = "Arial, sans-serif";
+const chartTitleMaxLineLength = 75;
+const rowHeight = 75;
+const minHeight = 500;
 
 export default function ApacheEchart({
-    isLoading = false,
-    className,
+  isLoading = false,
+  className,
+  ministryUsage = [],
 }) {
-    const chartRef = useRef(null);
-    const chartInstanceRef = useRef(null);
+  const chartRef = useRef(null);
+  const chartInstanceRef = useRef(null);
+  const [drilldownChartHeight, setDrilldownChartHeight] = useState(null);
+  const ministries = useMemo(
+    () => (Array.isArray(ministryUsage) ? ministryUsage : []),
+    [ministryUsage]
+  );
+  const rootChartHeight = Math.max(minHeight, ministries.length * rowHeight);
+  const chartHeight =
+    drilldownChartHeight?.source === ministries
+      ? drilldownChartHeight.height
+      : rootChartHeight;
 
-    const yAxisLabelWidth = 250;
-    const yAxisMaxLineLength = 35;
-    const chartGrid = {
-        left: 300,
-        right: 50,
-        top: 104,
-        bottom: 20,
-        containLabel: false,
-    };
-    const chartFontFamily = "Arial, sans-serif";
-    const chartTitleMaxLineLength = 75;
+  useEffect(() => {
+    if (!chartInstanceRef.current) {
+      chartInstanceRef.current = echarts.init(chartRef.current);
+    }
 
-    const ministries = useMemo(
-        () => [...response.data.data],
-        []
-    );
+    const chart = chartInstanceRef.current;
 
-    const rowHeight = 75;
-    const minHeight = 500;
-    const [chartHeight, setChartHeight] = useState(minHeight);
+    const formatTextLinesByWords = (value, maxLineLength) => {
+      const words = String(value ?? "").split(" ");
+      const lines = [];
+      let currentLine = "";
 
-    useEffect(() => {
-        setChartHeight(Math.max(minHeight, ministries.length * rowHeight));
-    }, [ministries]);
-
-    useEffect(() => {
-        if (!chartInstanceRef.current) {
-            chartInstanceRef.current = echarts.init(chartRef.current);
+      words.forEach((word) => {
+        if ((currentLine + " " + word).trim().length <= maxLineLength) {
+          currentLine = (currentLine + " " + word).trim();
+        } else {
+          lines.push(currentLine);
+          currentLine = word;
         }
+      });
 
-        const chart = chartInstanceRef.current;
+      if (currentLine) {
+        lines.push(currentLine);
+      }
 
-        const formatTextLinesByWords = (value, maxLineLength) => {
-            const words = value.split(" ");
-            const lines = [];
-            let currentLine = "";
+      return lines;
+    };
+    const formatTextByWords = (value, maxLineLength) =>
+      formatTextLinesByWords(value, maxLineLength).join("\n");
+    const formatTitleText = (value) =>
+      formatTextLinesByWords(value, chartTitleMaxLineLength)
+        .map((line) => `${line}`)
+        .join("\n");
+    const formatAxisLabel = (value) => formatTextByWords(value, yAxisMaxLineLength);
+    const formatCompactNumber = (value) => {
+      const numericValue = Number(value || 0);
+      const trimTrailingZeros = (formattedValue) =>
+        formattedValue.replace(/\.0+$|(\.\d*[1-9])0+$/, "$1");
 
-            words.forEach((word) => {
-                if ((currentLine + " " + word).trim().length <= maxLineLength) {
-                    currentLine = (currentLine + " " + word).trim();
-                } else {
-                    lines.push(currentLine);
-                    currentLine = word;
-                }
-            });
+      if (numericValue >= 1000000000000) {
+        return `${trimTrailingZeros((numericValue / 1000000000000).toFixed(2))}T`;
+      }
 
-            if (currentLine) {
-                lines.push(currentLine);
-            }
+      if (numericValue >= 1000000000) {
+        return `${trimTrailingZeros((numericValue / 1000000000).toFixed(2))}B`;
+      }
 
-            return lines;
-        };
-        const formatTextByWords = (value, maxLineLength) =>
-            formatTextLinesByWords(value, maxLineLength).join("\n");
-        const formatTitleText = (value) =>
-            formatTextLinesByWords(value, chartTitleMaxLineLength)
-                .map((line) => `${line}`)
-                .join("\n");
-        const formatAxisLabel = (value) => formatTextByWords(value, yAxisMaxLineLength);
-        const formatCompactNumber = (value) => {
-            const numericValue = Number(value || 0);
-            const trimTrailingZeros = (formattedValue) =>
-                formattedValue.replace(/\.0+$|(\.\d*[1-9])0+$/, "$1");
+      if (numericValue >= 1000000) {
+        return `${trimTrailingZeros((numericValue / 1000000).toFixed(2))}M`;
+      }
 
-            if (numericValue >= 1000000000000) {
-                return `${trimTrailingZeros((numericValue / 1000000000000).toFixed(2))}T`;
-            }
+      if (numericValue >= 1000) {
+        return `${Math.round(numericValue / 1000)}K`;
+      }
 
-            if (numericValue >= 1000000000) {
-                return `${trimTrailingZeros((numericValue / 1000000000).toFixed(2))}B`;
-            }
+      return Math.round(numericValue).toString();
+    };
+    const getTooltipFormatter = (params) => {
+      const item = params.data;
 
-            if (numericValue >= 1000000) {
-                return `${trimTrailingZeros((numericValue / 1000000).toFixed(2))}M`;
-            }
+      if (!item) return "";
 
-            if (numericValue >= 1000) {
-                return `${Math.round(numericValue / 1000)}K`;
-            }
-
-            return Math.round(numericValue).toString();
-        };
-        const getTooltipFormatter = (params) => {
-            const item = params.data;
-
-            if (!item) return "";
-
-            return `
+      return `
                 <div style="min-width: 220px; font-family: ${chartFontFamily};">
                     <div style="margin-bottom: 10px; font-size: 14px; font-weight: 700; color: #111827;">
                         ${item.label || params.name}
@@ -118,246 +116,249 @@ export default function ApacheEchart({
                     </div>
                 </div>
             `;
-        };
+    };
 
-        const getHeaderGraphic = (titleText, showBack = false) => {
-            const headerGraphic = [
-                {
-                    type: "text",
-                    left: 0,
-                    top: 10,
-                    z: 100,
-                    style: {
-                        text: formatTitleText(titleText),
-                        textAlign: "left",
-                        textVerticalAlign: "top",
-                        fontSize: 18,
-                        fontWeight: 600,
-                        fontFamily: chartFontFamily,
-                        fill: "#111827",
-                        lineHeight: 54,
-                    },
-                },
-            ];
+    const getHeaderGraphic = (titleText, showBack = false) => {
+      const headerGraphic = [
+        {
+          type: "text",
+          left: 0,
+          top: 10,
+          z: 100,
+          style: {
+            text: formatTitleText(titleText),
+            textAlign: "left",
+            textVerticalAlign: "top",
+            fontSize: 18,
+            fontWeight: 600,
+            fontFamily: chartFontFamily,
+            fill: "#111827",
+            lineHeight: 54,
+          },
+        },
+      ];
 
-            if (showBack) {
-                headerGraphic.push({
-                    type: "text",
-                    left: 20,
-                    top: 60,
-                    z: 100,
-                    style: {
-                        text: "<- Back to Ministries",
-                        fontSize: 16,
-                        fontWeight: "bold",
-                        cursor: "pointer",
-                        fontFamily: chartFontFamily,
-                        fill: "#111827",
-                    },
-                    onclick: handleBack,
-                });
-            }
-
-            return headerGraphic;
-        };
-
-        const getChartOption = (yAxisData, seriesData, extraOption = {}) => ({
-            tooltip: {
-                trigger: "item",
-                backgroundColor: "#FFFFFF",
-                borderColor: "#D1D5DB",
-                borderWidth: 1,
-                padding: 12,
-                textStyle: {
-                    fontFamily: chartFontFamily,
-                },
-                extraCssText: "box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12); border-radius: 10px;",
-                formatter: getTooltipFormatter,
-            },
-            grid: chartGrid,
-            xAxis: {
-                type: "value",
-                axisLabel: {
-                    fontFamily: chartFontFamily,
-                    formatter: formatCompactNumber,
-                },
-            },
-            yAxis: {
-                type: "category",
-                inverse: true,
-                data: yAxisData,
-                axisTick: {
-                    show: false,
-                },
-                axisLabel: {
-                    width: yAxisLabelWidth,
-                    overflow: "break",
-                    lineHeight: 20,
-                    margin: 20,
-                    fontFamily: chartFontFamily,
-                    formatter: formatAxisLabel,
-                },
-            },
-            animationDurationUpdate: 800,
-            series: {
-                id: "meetings",
-                type: "bar",
-                colorBy: "data",
-                barMaxWidth: 28,
-                barCategoryGap: "30%",
-                label: {
-                    show: true,
-                    position: "right",
-                    fontFamily: chartFontFamily,
-                    formatter: ({ value }) => formatCompactNumber(value),
-                },
-                ...seriesData,
-                universalTransition: {
-                    enabled: true,
-                    divideShape: "clone",
-                },
-            },
-            ...extraOption,
+      if (showBack) {
+        headerGraphic.push({
+          type: "text",
+          left: 20,
+          top: 60,
+          z: 100,
+          style: {
+            text: "< Back to Ministries",
+            fontSize: 16,
+            fontWeight: "bold",
+            cursor: "pointer",
+            fontFamily: chartFontFamily,
+            fill: "#111827",
+          },
+          onclick: handleBack,
         });
+      }
 
-        if (isLoading) {
-            chart.showLoading();
-            return;
-        }
+      return headerGraphic;
+    };
 
-        chart.hideLoading();
+    const getChartOption = (yAxisData, seriesData, extraOption = {}) => ({
+      tooltip: {
+        trigger: "item",
+        backgroundColor: "#FFFFFF",
+        borderColor: "#D1D5DB",
+        borderWidth: 1,
+        padding: 12,
+        textStyle: {
+          fontFamily: chartFontFamily,
+        },
+        extraCssText: "box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12); border-radius: 10px;",
+        formatter: getTooltipFormatter,
+      },
+      grid: chartGrid,
+      xAxis: {
+        type: "value",
+        axisLabel: {
+          fontFamily: chartFontFamily,
+          formatter: formatCompactNumber,
+        },
+      },
+      yAxis: {
+        type: "category",
+        inverse: true,
+        data: yAxisData,
+        axisTick: {
+          show: false,
+        },
+        axisLabel: {
+          width: yAxisLabelWidth,
+          overflow: "break",
+          lineHeight: 20,
+          margin: 20,
+          fontFamily: chartFontFamily,
+          formatter: formatAxisLabel,
+        },
+      },
+      animationDurationUpdate: 800,
+      series: {
+        id: "meetings",
+        type: "bar",
+        colorBy: "data",
+        barMaxWidth: 28,
+        barCategoryGap: "30%",
+        label: {
+          show: true,
+          position: "right",
+          fontFamily: chartFontFamily,
+          formatter: ({ value }) => formatCompactNumber(value),
+        },
+        ...seriesData,
+        universalTransition: {
+          enabled: true,
+          divideShape: "clone",
+        },
+      },
+      ...extraOption,
+    });
 
-        const rootOption = getChartOption(
-            ministries.map((ministry) => ministry.ministry_name),
-            {
-                data: ministries.map((ministry) => ({
-                    value: ministry.meetings_count,
-                    groupId: ministry.ministry_id.toString(),
-                    label: ministry.ministry_name,
-                    meetings_count: ministry.meetings_count,
-                    duration_sum: ministry.duration_sum,
-                    participants_sum: ministry.participants_sum,
-                })),
-            },
-            {
-                graphic: getHeaderGraphic("Meetings by Ministry"),
-            }
-        );
+    if (isLoading) {
+      chart.showLoading();
+      return;
+    }
 
-        const drilldownData = ministries.map((ministry) => ({
-            dataGroupId: ministry.ministry_id.toString(),
-            ministryName: ministry.ministry_name,
-            data: ministry.organizations.map((organization) => ({
-                value: organization.meetings_count,
-                label: organization.organization_name,
-                meetings_count: organization.meetings_count,
-                duration_sum: organization.duration_sum,
-                participants_sum: organization.participants_sum,
-            })),
-        }));
+    chart.hideLoading();
 
-        const handleBack = () => {
-            const newHeight = Math.max(minHeight, ministries.length * rowHeight);
+    const rootOption = getChartOption(
+      ministries.map((ministry) => ministry.ministry_name),
+      {
+        data: ministries.map((ministry) => ({
+          value: ministry.meetings_count,
+          groupId: String(ministry.ministry_id ?? ministry.ministry_name),
+          label: ministry.ministry_name,
+          meetings_count: ministry.meetings_count,
+          duration_sum: ministry.duration_sum,
+          participants_sum: ministry.participants_sum,
+        })),
+      },
+      {
+        graphic: getHeaderGraphic("Meetings by Ministry"),
+      }
+    );
 
-            setChartHeight(newHeight);
+    const drilldownData = ministries.map((ministry) => ({
+      dataGroupId: String(ministry.ministry_id ?? ministry.ministry_name),
+      ministryName: ministry.ministry_name,
+      data: (Array.isArray(ministry.organizations) ? ministry.organizations : []).map((organization) => ({
+        value: organization.meetings_count,
+        label: organization.organization_name,
+        meetings_count: organization.meetings_count,
+        duration_sum: organization.duration_sum,
+        participants_sum: organization.participants_sum,
+      })),
+    }));
 
-            setTimeout(() => {
-                chart.resize({
-                    height: newHeight,
-                });
+    const handleBack = () => {
+      const newHeight = rootChartHeight;
 
-                chart.setOption(rootOption, {
-                    notMerge: true,
-                });
-            }, 0);
-        };
+      setDrilldownChartHeight(null);
 
-        const handleChartClick = (event) => {
-            if (!event.data) return;
-
-            const drilldown = drilldownData.find(
-                (item) => item.dataGroupId === event.data.groupId
-            );
-
-            if (!drilldown) return;
-
-            const newHeight = Math.max(minHeight, drilldown.data.length * rowHeight);
-
-            setChartHeight(newHeight);
-
-            const drilldownOption = getChartOption(
-                drilldown.data.map((item) => item.label),
-                {
-                    dataGroupId: drilldown.dataGroupId,
-                    data: drilldown.data,
-                },
-                {
-                    graphic: getHeaderGraphic(
-                        `Organizations Under ${drilldown.ministryName}`,
-                        true
-                    ),
-                }
-            );
-
-            setTimeout(() => {
-                chart.resize({
-                    height: newHeight,
-                });
-
-                chart.setOption(drilldownOption, {
-                    notMerge: true,
-                });
-            }, 0);
-        };
-
-        chart.off("click");
-        chart.on("click", handleChartClick);
+      setTimeout(() => {
+        chart.resize({
+          height: newHeight,
+        });
 
         chart.setOption(rootOption, {
-            notMerge: true,
+          notMerge: true,
+        });
+      }, 0);
+    };
+
+    const handleChartClick = (event) => {
+      if (!event.data) return;
+
+      const drilldown = drilldownData.find(
+        (item) => item.dataGroupId === event.data.groupId
+      );
+
+      if (!drilldown) return;
+
+      const newHeight = Math.max(minHeight, drilldown.data.length * rowHeight);
+
+      setDrilldownChartHeight({
+        source: ministries,
+        height: newHeight,
+      });
+
+      const drilldownOption = getChartOption(
+        drilldown.data.map((item) => item.label),
+        {
+          dataGroupId: drilldown.dataGroupId,
+          data: drilldown.data,
+        },
+        {
+          graphic: getHeaderGraphic(
+            `Organizations Under ${drilldown.ministryName}`,
+            true
+          ),
+        }
+      );
+
+      setTimeout(() => {
+        chart.resize({
+          height: newHeight,
         });
 
-        return () => {
-            chart.off("click");
-            chart.dispose();
-            chartInstanceRef.current = null;
-        };
-    }, [isLoading, ministries]);
-
-    useEffect(() => {
-        if (!chartInstanceRef.current) return;
-
-        chartInstanceRef.current.resize({
-            height: chartHeight,
+        chart.setOption(drilldownOption, {
+          notMerge: true,
         });
-    }, [chartHeight]);
+      }, 0);
+    };
 
-    useEffect(() => {
-        const handleResize = () => chartInstanceRef.current?.resize();
+    chart.off("click");
+    chart.on("click", handleChartClick);
 
-        window.addEventListener("resize", handleResize);
+    chart.setOption(rootOption, {
+      notMerge: true,
+    });
 
-        return () => window.removeEventListener("resize", handleResize);
-    }, []);
+    return () => {
+      chart.off("click");
+      chart.dispose();
+      chartInstanceRef.current = null;
+    };
+  }, [isLoading, ministries, rootChartHeight]);
 
-    return (
-        <div
-            style={{
-                width: "100%",
-                height: "500px",
-                overflowY: "auto",
-            }}
-        >
-            <div
-                ref={chartRef}
-                className={className}
-                style={{
-                    width: "100%",
-                    height: `${chartHeight}px`,
-                }}
-            />
-        </div>
-    );
+  useEffect(() => {
+    if (!chartInstanceRef.current) return;
+
+    chartInstanceRef.current.resize({
+      height: chartHeight,
+    });
+  }, [chartHeight]);
+
+  useEffect(() => {
+    const handleResize = () => chartInstanceRef.current?.resize();
+
+    window.addEventListener("resize", handleResize);
+
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  return (
+    <div
+      style={{
+        width: "100%",
+        height: "500px",
+        overflowY: "auto",
+      }}
+    >
+      <div
+        ref={chartRef}
+        className={className}
+        style={{
+          width: "100%",
+          height: `${chartHeight}px`,
+        }}
+      />
+    </div>
+  );
 }
 
 
