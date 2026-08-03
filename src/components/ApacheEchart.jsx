@@ -62,7 +62,9 @@ export default function ApacheEchart({
     };
 
     if (isLoading) {
-      chart.showLoading();
+      chart.showLoading("default", {
+        maskColor: "rgba(255, 255, 255, 0)",
+      });
       return;
     }
 
