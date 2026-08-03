@@ -230,11 +230,11 @@ export default function ApacheEchart({
           height: `${chartHeight}px`,
         }}
       />
-{period && (
-  <div className="mt-3 px-3 pb-1 text-start text-muted small fw-medium">
-    * data as of {period}
-  </div>
-)}
+      {period && (
+        <div className="mt-3 px-3 pb-1 text-start text-muted small fw-bold">
+          * Data as of {period}
+        </div>
+      )}
     </div>
   );
 }
