@@ -18,6 +18,7 @@ export default function ApacheEchart({
   const chartRef = useRef(null);
   const chartInstanceRef = useRef(null);
   const chartUpdateTimerRef = useRef(null);
+  const currentChartHeightRef = useRef(null);
   const [drilldownChartHeight, setDrilldownChartHeight] = useState(null);
   const ministries = useMemo(
     () => (Array.isArray(ministryUsage) ? ministryUsage : []),
@@ -30,13 +31,26 @@ export default function ApacheEchart({
       : rootChartHeight;
 
   useEffect(() => {
-    if (!chartRef.current) return;
+    if (!chartRef.current || chartInstanceRef.current) return;
 
-    if (!chartInstanceRef.current) {
-      chartInstanceRef.current = echarts.init(chartRef.current);
-    }
+    chartInstanceRef.current = echarts.init(chartRef.current);
 
+    return () => {
+      if (chartUpdateTimerRef.current) {
+        window.clearTimeout(chartUpdateTimerRef.current);
+        chartUpdateTimerRef.current = null;
+      }
+
+      chartInstanceRef.current?.off("click");
+      chartInstanceRef.current?.dispose();
+      chartInstanceRef.current = null;
+      currentChartHeightRef.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
     const chart = chartInstanceRef.current;
+    if (!chart) return;
 
     const setChartOption = (currentChart, option) => {
       currentChart.dispatchAction({
@@ -59,6 +73,15 @@ export default function ApacheEchart({
 
         callback(chartInstanceRef.current);
       }, 0);
+    };
+
+    const resizeChartIfNeeded = (currentChart, newHeight) => {
+      if (currentChartHeightRef.current === newHeight) return;
+
+      currentChart.resize({
+        height: newHeight,
+      });
+      currentChartHeightRef.current = newHeight;
     };
 
     if (isLoading) {
@@ -131,10 +154,7 @@ export default function ApacheEchart({
       setDrilldownChartHeight(null);
 
       queueChartUpdate((currentChart) => {
-        currentChart.resize({
-          height: newHeight,
-        });
-
+        resizeChartIfNeeded(currentChart, newHeight);
         setChartOption(currentChart, rootOption);
       });
     };
@@ -169,10 +189,7 @@ export default function ApacheEchart({
       );
 
       queueChartUpdate((currentChart) => {
-        currentChart.resize({
-          height: newHeight,
-        });
-
+        resizeChartIfNeeded(currentChart, newHeight);
         setChartOption(currentChart, drilldownOption);
       });
     };
@@ -189,17 +206,17 @@ export default function ApacheEchart({
       }
 
       chart.off("click");
-      chart.dispose();
-      chartInstanceRef.current = null;
     };
   }, [isLoading, ministries, rootChartHeight]);
 
   useEffect(() => {
-    if (!chartInstanceRef.current) return;
+    const chart = chartInstanceRef.current;
+    if (!chart || currentChartHeightRef.current === chartHeight) return;
 
-    chartInstanceRef.current.resize({
+    chart.resize({
       height: chartHeight,
     });
+    currentChartHeightRef.current = chartHeight;
   }, [chartHeight]);
 
   useEffect(() => {
