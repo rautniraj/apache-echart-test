@@ -13,6 +13,7 @@ export default function ApacheEchart({
   isLoading,
   className,
   ministryUsage,
+  period,
 }) {
   const chartRef = useRef(null);
   const chartInstanceRef = useRef(null);
@@ -213,16 +214,24 @@ export default function ApacheEchart({
         width: "100%",
         height: "35rem",
         overflowY: "auto",
+        display: "flex",
+        flexDirection: "column",
       }}
     >
       <div
         ref={chartRef}
         className={className}
         style={{
+          flex: 1,
           width: "100%",
           height: `${chartHeight}px`,
         }}
       />
+{period && (
+  <div className="mt-3 px-3 pb-1 text-start text-muted small fw-medium">
+    * data as of {period}
+  </div>
+)}
     </div>
   );
 }
