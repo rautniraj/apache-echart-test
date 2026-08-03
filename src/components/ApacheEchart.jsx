@@ -16,7 +16,7 @@ const rowHeight = 75;
 const minHeight = 500;
 
 export default function ApacheEchart({
-  isLoading = false,
+  isLoading,
   className,
   ministryUsage,
 }) {
