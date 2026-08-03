@@ -11,7 +11,6 @@ const chartGrid = {
   containLabel: false,
 };
 const chartFontFamily = "Arial, sans-serif";
-const chartTitleMaxLineLength = 75;
 const rowHeight = 75;
 const minHeight = 500;
 
@@ -88,10 +87,6 @@ export default function ApacheEchart({
     };
     const formatTextByWords = (value, maxLineLength) =>
       formatTextLinesByWords(value, maxLineLength).join("\n");
-    const formatTitleText = (value) =>
-      formatTextLinesByWords(value, chartTitleMaxLineLength)
-        .map((line) => `${line}`)
-        .join("\n");
     const formatAxisLabel = (value) => formatTextByWords(value, yAxisMaxLineLength);
     const formatCompactNumber = (value) => {
       const numericValue = Number(value || 0);
@@ -143,46 +138,41 @@ export default function ApacheEchart({
       `;
     };
 
-    const getHeaderGraphic = (titleText, showBack = false) => {
-      const headerGraphic = [
-        {
-          type: "text",
-          left: 0,
-          top: 10,
-          z: 100,
-          style: {
-            text: formatTitleText(titleText),
-            textAlign: "left",
-            textVerticalAlign: "top",
-            fontSize: 18,
-            fontWeight: 600,
-            fontFamily: chartFontFamily,
-            fill: "#111827",
-            lineHeight: 54,
-          },
-        },
-      ];
+    const getChartTitle = (subtext) => ({
+      text: "Meetings Dashboard",
+      subtext,
+      left: "center",
+      top: 8,
+      textStyle: {
+        fontSize: 18,
+        fontWeight: 600,
+        fontFamily: chartFontFamily,
+        color: "#111827",
+      },
+      subtextStyle: {
+        fontSize: 15,
+        fontWeight: 500,
+        fontFamily: chartFontFamily,
+        color: "#6B7280",
+        lineHeight: 20,
+      },
+    });
 
-      if (showBack) {
-        headerGraphic.push({
-          type: "text",
-          left: 20,
-          top: 60,
-          z: 100,
-          style: {
-            text: "< Back to Ministries",
-            fontSize: 16,
-            fontWeight: "bold",
-            cursor: "pointer",
-            fontFamily: chartFontFamily,
-            fill: "#111827",
-          },
-          onclick: handleBack,
-        });
-      }
-
-      return headerGraphic;
-    };
+    const getBackGraphic = () => ({
+      type: "text",
+      left: 20,
+      top: 18,
+      z: 100,
+      style: {
+        text: "< Back",
+        fontSize: 15,
+        fontWeight: "bold",
+        cursor: "pointer",
+        fontFamily: chartFontFamily,
+        fill: "#111827",
+      },
+      onclick: handleBack,
+    });
 
     const getNoDataGraphic = () => ({
       type: "text",
@@ -231,6 +221,7 @@ export default function ApacheEchart({
           },
         },
       },
+      title: getChartTitle("Top Ministries"),
       grid: chartGrid,
       xAxis: {
         type: "value",
@@ -295,10 +286,7 @@ export default function ApacheEchart({
             data: [],
           },
           {
-            graphic: [
-              ...getHeaderGraphic("Meetings by Ministry"),
-              getNoDataGraphic(),
-            ],
+            graphic: [getNoDataGraphic()],
             grid: {
               show: false,
             },
@@ -327,7 +315,7 @@ export default function ApacheEchart({
         })),
       },
       {
-        graphic: getHeaderGraphic("Meetings by Ministry"),
+        title: getChartTitle("Top Ministries"),
       }
     );
 
@@ -380,10 +368,8 @@ export default function ApacheEchart({
           data: drilldown.data,
         },
         {
-          graphic: getHeaderGraphic(
-            `Organizations Under ${drilldown.ministryName}`,
-            true
-          ),
+          title: getChartTitle(`Organizations - ${drilldown.ministryName}`),
+          graphic: [getBackGraphic()],
         },
         false
       );
