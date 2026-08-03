@@ -214,6 +214,7 @@ export default function ApacheEchart({
         width: "100%",
         height: "35rem",
         overflowY: "auto",
+        overflowX: "hidden",
         display: "flex",
         flexDirection: "column",
       }}
