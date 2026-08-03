@@ -7,7 +7,7 @@ import {
   getNoDataGraphic,
   minHeight,
   rowHeight,
-} from "./apacheEchartUtils";
+} from "./apacheEchartUtils.jsx";
 
 export default function ApacheEchart({
   isLoading,
