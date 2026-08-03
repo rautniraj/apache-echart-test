@@ -2,6 +2,30 @@ body{
   background-image: var(--gradient-bg, linear-gradient(to bottom right, #FF9933, #FFFFFF 30% 70%, #138808));
 }
 
+.chart-shell {
+  height: 35rem;
+  overflow-x: hidden;
+}
+
+.chart-canvas {
+  height: var(--chart-height);
+}
+
+.chart-tooltip__title {
+  font-size: 14px;
+  line-height: 1.4;
+  font-weight: 700;
+  color: #6b7280;
+  max-width: 240px;
+  word-break: break-word;
+}
+
+.chart-tooltip__divider {
+  margin: 0.25rem 0;
+  border-color: #d1d5db;
+  opacity: 1;
+}
+
 .counter {
   font-size: 16px;
   padding: 5px 10px;

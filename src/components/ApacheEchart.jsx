@@ -228,27 +228,16 @@ export default function ApacheEchart({
   }, []);
 
   return (
-    <div
-      style={{
-        width: "100%",
-        height: "35rem",
-        overflowY: "auto",
-        overflowX: "hidden",
-        display: "flex",
-        flexDirection: "column",
-      }}
-    >
+    <div className="chart-shell w-100 d-flex flex-column overflow-auto">
       <div
         ref={chartRef}
-        className={className}
+        className={`chart-canvas flex-grow-1 w-100 ${className ?? ""}`.trim()}
         style={{
-          flex: 1,
-          width: "100%",
-          height: `${chartHeight}px`,
+          "--chart-height": `${chartHeight}px`,
         }}
       />
       {period && (
-        <div className="mt-3 px-3 pb-1 text-start text-muted small fw-bold">
+        <div className="mt-3 px-3 pb-1 text-center text-muted small fw-bold">
           * Data as of {period}
         </div>
       )}

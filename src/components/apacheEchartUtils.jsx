@@ -36,6 +36,19 @@ export function formatTextByWords(value, maxLineLength) {
   return formatTextLinesByWords(value, maxLineLength).join("\n");
 }
 
+export function formatTextByWordsForHtml(value, maxLineLength) {
+  return formatTextLinesByWords(value, maxLineLength).join("<br />");
+}
+
+export function escapeHtml(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
 export function formatAxisLabel(value) {
   return formatTextByWords(value, yAxisMaxLineLength);
 }
@@ -69,11 +82,15 @@ export function getTooltipFormatter(params) {
 
   if (!item) return "";
 
+  const label = escapeHtml(item.label || params.name);
+  const wrappedLabel = formatTextByWordsForHtml(label, 28);
+
   return `
-    <div style="min-width: 200px; font-family: ${chartFontFamily};">
-    <div style="margin-bottom: 8px; font-size: 14px; font-weight: 700; color: #6B7280;">
-      ${item.label || params.name}
-    </div>
+    <div class="chart-tooltip" style="min-width: 200px; font-family: ${chartFontFamily};">
+      <div class="chart-tooltip__title">
+        ${wrappedLabel}
+      </div>
+      <hr class="chart-tooltip__divider" />
       <div style="display: grid; grid-template-columns: auto minmax(165px, 1fr) auto; align-items: center; gap: 7px 10px; font-size: 14px; color: #5F6368;">
         <span style="width: 10px; height: 10px; border-radius: 50%; background: ${params.color}; display: inline-block;"></span>
         <span>Meetings Hosted</span>
