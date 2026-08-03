@@ -1,3 +1,7 @@
+body{
+  background-image: var(--gradient-bg, linear-gradient(to bottom right, #FF9933, #FFFFFF 30% 70%, #138808));
+}
+
 .counter {
   font-size: 16px;
   padding: 5px 10px;
