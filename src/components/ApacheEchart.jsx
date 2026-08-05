@@ -228,7 +228,7 @@ export default function ApacheEchart({
   }, []);
 
   return (
-    <div className="chart-shell w-100 d-flex flex-column overflow-auto">
+    <div className="chart-shell w-100 d-flex flex-column">
       <div
         ref={chartRef}
         className={`chart-canvas flex-grow-1 w-100 ${className ?? ""}`.trim()}
