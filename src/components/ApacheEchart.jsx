@@ -56,7 +56,9 @@ export default function ApacheEchart({
       currentChart.dispatchAction({
         type: "hideTip",
       });
-      currentChart.setOption(option);
+      currentChart.setOption(option, {
+        replaceMerge: ["graphic"],
+      });
     };
 
     const queueChartUpdate = (callback) => {
@@ -133,6 +135,7 @@ export default function ApacheEchart({
       },
       {
         title: getChartTitle("Top Ministries"),
+        graphic: [],
       }
     );
 
