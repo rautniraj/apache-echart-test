@@ -237,7 +237,7 @@ export default function ApacheEchart({
         }}
       />
       {period && (
-        <div className="mt-3 px-3 pb-1 text-center text-muted small fw-bold">
+        <div className="mt-4 px-3 pb-1 text-center text-muted small fw-bold">
           * Data as of {period}
         </div>
       )}
